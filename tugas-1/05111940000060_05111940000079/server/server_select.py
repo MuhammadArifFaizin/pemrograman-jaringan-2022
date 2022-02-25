@@ -1,6 +1,7 @@
 import socket
 import select
 import sys
+from os import path
 
 server_address = ('127.0.0.1', 5001)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -22,9 +23,18 @@ try:
             else:            	
                 data = sock.recv(1024)
                 print(sock.getpeername(), data)
-            
+
                 if data:
-                    sock.send(data)
+                    cmd = data.decode("utf-8").split()
+                    print(cmd)
+                    if cmd[0] == "unduh":
+                        is_exist = path.exists("dataset/" + cmd[1])
+                        is_file = path.isfile("dataset/" + cmd[1])
+                        if is_exist and is_file:
+                            with open("dataset/" + cmd[1]) as f:
+                                lines = f.readlines()
+                                lines = "".join(lines)
+                                sock.send(bytes(lines, 'utf-8'))
                 else:                    
                     sock.close()
                     input_socket.remove(sock)

@@ -14,6 +14,10 @@ try:
         received_data = client_socket.recv(1024).decode('utf-8')
         sys.stdout.write(received_data)
         sys.stdout.write('>> ')
+        while received_data:
+            received_data = client_socket.recv(1024).decode('utf-8')
+            sys.stdout.write(received_data)
+            sys.stdout.write('>> ')
 
 except KeyboardInterrupt:
     client_socket.close()
