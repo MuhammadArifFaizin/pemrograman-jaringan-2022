@@ -2,6 +2,7 @@ import socket
 import select
 import sys
 from os import path
+import os
 
 server_address = ('127.0.0.1', 5001)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -22,19 +23,26 @@ try:
             
             else:            	
                 data = sock.recv(1024)
-                print(sock.getpeername(), data)
+                print('sock.getpeername(), data:', sock.getpeername(), data)
 
                 if data:
                     cmd = data.decode("utf-8").split()
-                    print(cmd)
+                    print('cmd:', cmd)
                     if cmd[0] == "unduh":
                         is_exist = path.exists("dataset/" + cmd[1])
                         is_file = path.isfile("dataset/" + cmd[1])
                         if is_exist and is_file:
+                            size = os.path.getsize("dataset/" + cmd[1])
+                            header = "file-name: " + cmd[1] + ",\n"
+                            header = header + "file-sizes: "+str(size)+",\n\n\n"
                             with open("dataset/" + cmd[1]) as f:
                                 lines = f.readlines()
                                 lines = "".join(lines)
+                                lines = lines + "\n"
+                                lines = header + lines
                                 sock.send(bytes(lines, 'utf-8'))
+                    else:
+                        msg = "do you mean \'unduh\'?"
                 else:                    
                     sock.close()
                     input_socket.remove(sock)
