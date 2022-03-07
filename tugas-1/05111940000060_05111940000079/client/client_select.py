@@ -15,9 +15,7 @@ try:
         
         sys.stdout.write('-=-=- output -=-=-\n')
         sys.stdout.write(received_data)
-        # f = open("", "x")
-        # f.write("Woops! I have deleted the content!")
-        # f.close()
+    
         
         # while received_data:
         #     received_data = client_socket.recv(1024).decode('utf-8')

@@ -43,6 +43,7 @@ try:
                                 sock.send(bytes(lines, 'utf-8'))
                     else:
                         msg = "do you mean \'unduh\'?"
+                        sock.send(bytes(msg, 'utf-8'))
                 else:                    
                     sock.close()
                     input_socket.remove(sock)
