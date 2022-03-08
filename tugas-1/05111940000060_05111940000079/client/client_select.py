@@ -1,3 +1,4 @@
+import os
 import socket
 import sys
 
@@ -16,6 +17,16 @@ try:
         sys.stdout.write('-=-=- output -=-=-\n')
         sys.stdout.write(received_data)
     
+        if not os.path.exists(os.path.join(os.getcwd(), "Download")):
+            os.mkdir("Download")
+
+        filename = received_data.splitlines()[0].split()[1]
+
+        with open(os.path.join(os.getcwd(), "Download", filename), "w+") as f:
+            content_file = received_data.splitlines()[4:]
+            
+            for line in content_file:
+                f.write(line + '\n')
         
         # while received_data:
         #     received_data = client_socket.recv(1024).decode('utf-8')
