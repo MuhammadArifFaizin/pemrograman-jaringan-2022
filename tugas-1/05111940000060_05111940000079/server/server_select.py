@@ -33,14 +33,13 @@ try:
                         is_file = path.isfile("dataset/" + cmd[1])
                         if is_exist and is_file:
                             size = os.path.getsize("dataset/" + cmd[1])
-                            header = "file-name: " + cmd[1] + ",\n"
-                            header = header + "file-sizes: "+str(size)+",\n\n\n"
+                            header = "file-name: " + cmd[1] + " ,\n"
+                            header = header + "file-sizes: "+str(size)+" ,\n\n\n"
                             with open("dataset/" + cmd[1]) as f:
-                                lines = f.readlines()
-                                lines = "".join(lines)
+                                lines = f.read()
                                 lines = lines + "\n"
                                 lines = header + lines
-                                sock.send(bytes(lines, 'utf-8'))
+                            sock.sendall(bytes(lines, 'utf-8'))
                     else:
                         msg = "do you mean \'unduh\'?"
                         sock.send(bytes(msg, 'utf-8'))
