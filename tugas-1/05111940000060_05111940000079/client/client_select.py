@@ -8,31 +8,62 @@ client_socket.connect(server_address)
 
 # sys.stdout.write('>> ')
 
+CLIENT_FILE_PATH = "Download"
+
+def convert_to_bytes(no):
+    result = bytearray()
+    result.append(no & 255)
+    for i in range(3):
+        no = no >> 8
+        result.append(no & 255)
+    return result
+
+def bytes_to_number(b):
+    res = 0
+    for i in range(4):
+        res += b[i] << (i*8)
+    return res
+
+def receive(sock):
+    size = bytes_to_number(sock.recv(4))
+    curr_size = 0
+    buff = b""
+
+    while curr_size < size:
+        data = sock.recv(1024)
+        if not data:
+            break
+        if(len(data) + curr_size > size):
+            data = data[:size-curr_size]
+        buff += data
+
+        curr_size += len(data)
+    
+    return buff
+
 try:
     while True:
         message = sys.stdin.readline()
-        client_socket.send(bytes(message, 'utf-8'))
-        received_data = client_socket.recv(1024).decode('utf-8')
-        
-        sys.stdout.write('-=-=- output -=-=-\n')
-        sys.stdout.write(received_data)
-    
-        if not os.path.exists(os.path.join(os.getcwd(), "Download")):
-            os.mkdir("Download")
+        cmd = message.split()[0]
+        filename = message.split()[1]
 
-        filename = received_data.splitlines()[0].split()[1]
+        if (cmd != 'unduh'):
+            break
 
-        with open(os.path.join(os.getcwd(), "Download", filename), "w+") as f:
-            content_file = received_data.splitlines()[4:]
-            
-            for line in content_file:
-                f.write(line + '\n')
+        client_socket.send(filename.encode())
         
-        # while received_data:
-        #     received_data = client_socket.recv(1024).decode('utf-8')
-        #     sys.stdout.write(received_data)
-        #     sys.stdout.write('>> ')
-            
+        # sys.stdout.write('-=-=- output -=-=-\n')
+        if not os.path.exists(os.path.join(os.getcwd(), CLIENT_FILE_PATH)):
+            os.mkdir(CLIENT_FILE_PATH)
+
+        buffer = receive(client_socket)
+        print(buffer)
+
+        with open(os.path.join(os.getcwd(), CLIENT_FILE_PATH, filename), "wb") as f:
+            f.write(buffer)
+        
+        sys.stdout.write('file_name : ' + filename + ',\n')
+        sys.stdout.write('file_size : ' + str(os.path.getsize(os.path.join(os.getcwd(), CLIENT_FILE_PATH, filename))) + ',\n\n\n')
 
 except KeyboardInterrupt:
     client_socket.close()
