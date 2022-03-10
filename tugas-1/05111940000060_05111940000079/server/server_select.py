@@ -2,15 +2,41 @@ import socket
 import select
 import sys
 from os import path
-import os
 
-server_address = ('127.0.0.1', 5001)
+HOST, PORT = "127.0.0.1", 5001
+
+server_address = (HOST, PORT)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.bind(server_address)
 server_socket.listen(5)
 
 input_socket = [server_socket]
+
+def convert_to_bytes(no):
+    result = bytearray()
+    result.append(no & 255)
+    for i in range(3):
+        no = no >> 8
+        result.append(no & 255)
+    return result
+
+SERVER_FILE_PATH = "dataset/"
+
+def check_file(paths):
+    is_exist = path.exists(SERVER_FILE_PATH + paths)
+    is_file = path.isfile(SERVER_FILE_PATH + paths)
+
+    return is_exist and is_file
+
+def send(sock, data):
+    length = len(data)
+    sock.send(convert_to_bytes(length))
+    byte = 0
+
+    while byte < length:
+        sock.send(data[byte:byte+1024])
+        byte += 1024
 
 try:
     while True:
@@ -26,23 +52,13 @@ try:
                 print('sock.getpeername(), data:', sock.getpeername(), data)
 
                 if data:
-                    cmd = data.decode("utf-8").split()
-                    print('cmd:', cmd)
-                    if cmd[0] == "unduh":
-                        is_exist = path.exists("dataset/" + cmd[1])
-                        is_file = path.isfile("dataset/" + cmd[1])
-                        if is_exist and is_file:
-                            size = os.path.getsize("dataset/" + cmd[1])
-                            header = "file-name: " + cmd[1] + " ,\n"
-                            header = header + "file-sizes: "+str(size)+" ,\n\n\n"
-                            with open("dataset/" + cmd[1]) as f:
-                                lines = f.read()
-                                lines = lines + "\n"
-                                lines = header + lines
-                            sock.sendall(bytes(lines, 'utf-8'))
-                    else:
-                        msg = "do you mean \'unduh\'?"
-                        sock.send(bytes(msg, 'utf-8'))
+                    file = data.decode("utf-8")
+                    print('file:', file)
+                    chk_file = check_file(file)
+                    if chk_file:
+                        with open(SERVER_FILE_PATH + file, "rb") as file:
+                            data = file.read()
+                        send(sock, data)
                 else:                    
                     sock.close()
                     input_socket.remove(sock)

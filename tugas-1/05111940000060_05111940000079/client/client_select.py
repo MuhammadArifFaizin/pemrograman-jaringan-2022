@@ -2,7 +2,9 @@ import os
 import socket
 import sys
 
-server_address = ('127.0.0.1', 5001)
+HOST, PORT = "127.0.0.1", 5001
+
+server_address = (HOST, PORT)
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect(server_address)
 
@@ -57,7 +59,6 @@ try:
             os.mkdir(CLIENT_FILE_PATH)
 
         buffer = receive(client_socket)
-        print(buffer)
 
         with open(os.path.join(os.getcwd(), CLIENT_FILE_PATH, filename), "wb") as f:
             f.write(buffer)
