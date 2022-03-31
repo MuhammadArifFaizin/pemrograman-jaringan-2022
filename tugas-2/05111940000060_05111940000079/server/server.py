@@ -3,8 +3,14 @@ import socket
 import select
 import sys
 from os import path
+import configparser
 
-server_address = ('127.0.0.1', 80)
+config = configparser.ConfigParser()
+config.read('httpserver.conf')
+
+server = config['SERVER']
+
+server_address = (server['host'], int(server['port']))
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.bind(server_address)
@@ -37,7 +43,6 @@ def send(sock, data):
     byte = 0
 
     while byte < length:
-        print(byte, length)
         sock.send(data[byte:byte+1024])
         byte += 1024
 
