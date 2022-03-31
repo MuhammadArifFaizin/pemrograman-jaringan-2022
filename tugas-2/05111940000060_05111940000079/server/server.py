@@ -67,13 +67,14 @@ try:
                     response_data = b''
                     
                     request_fullname = request_dirname[1:] + "/" + request_basename
-                    print("request_fullname : " + request_fullname)
+                    print("request :", request_fullname, request_file)
+                    # print("request_fullname : " + request_fullname)
 
                     if request_file == '/' \
-                        or request_basename == 'index.html' \
+                        or request_fullname == '/index.html' \
                         or (check_folder(request_dirname[1:]) and not check_file(request_fullname)):
                         try:
-                            if request_file == '/':
+                            if request_file == '/' or request_fullname == '/index.html':
                                 f = open('index.html', 'r')
                             else:
                                 f = open(request_dirname[1:] + "/" + 'index.html', 'r')
@@ -95,7 +96,7 @@ try:
                             <body>
                                 Index of directory
                             '''
-                            for root, dirs, files in os.walk(".", topdown=False):
+                            for root, dirs, files in os.walk(request_dirname[1:], topdown=False):
                                 for name in files:
                                     response_data += '''
                                     <div>
