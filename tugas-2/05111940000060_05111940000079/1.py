@@ -19,6 +19,6 @@ while True:
     response += received.decode('utf-8')
     break;
     
-# print('Status code and description of', url, ':', response.split('\n')[0].split(' ', 1)[1].split('\r')[0])
-print(response)
+print('Status code and description of', url, ':', response.split('\n')[0].split(' ', 1)[1].split('\r')[0])
+# print(response)
 client_socket.close()
