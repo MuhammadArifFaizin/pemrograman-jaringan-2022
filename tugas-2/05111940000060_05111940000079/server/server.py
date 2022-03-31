@@ -2,21 +2,11 @@ import os
 import socket
 import select
 import sys
+import threading
 from os import path
 import configparser
 
-config = configparser.ConfigParser()
-config.read('httpserver.conf')
-
-server = config['SERVER']
-
-server_address = (server['host'], int(server['port']))
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server_socket.bind(server_address)
-server_socket.listen(5)
-
-input_socket = [server_socket]
+from numpy import size
 
 def convert_to_bytes(no):
     result = bytearray()
@@ -38,112 +28,181 @@ def check_folder(paths):
 
     return is_exist and is_folder
 
-def send(sock, data):
-    length = len(data)
-    byte = 0
+class Server:
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.size = 1024
+        self.server = None
+        self.client_threads = []
 
-    while byte < length:
-        sock.send(data[byte:byte+1024])
-        byte += 1024
+    def init_socket(self):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server.bind((self.host, self.port))
+        self.server.listen(5)
 
-try:
-    while True:
-        read_ready, write_ready, exception = select.select(input_socket, [], [])
-        
-        for sock in read_ready:
-            if sock == server_socket:
-                client_socket, client_address = server_socket.accept()
-                input_socket.append(client_socket)                       
+    def run(self):
+        self.init_socket()
+        input_socket = [self.server]
+        running = 1
+
+        while running:
+            read_ready, write_ready, exception = select.select(input_socket, [], [])
             
-            else:                
-                # receive data from client, break when null received          
-                data = sock.recv(4096)
-                if data:
+            for sock in read_ready:
+                if sock == self.server:
+                    client_socket, client_address = self.server.accept()
+                    client = Client(client_socket, client_address)
+                    client.run()
+                    self.client_threads.append(client_socket)                       
                 
-                    data = data.decode('utf-8')
-                    request_header = data.split('\r\n')
-                    print(request_header[0])
-                    request_file = request_header[0].split(" ")[1]
-                    
-                    request_dirname = path.dirname(request_file)
-                    request_basename = path.basename(request_file)
+                elif sock == sys.stdin:
+                    # handle standard input
+                    _ = sys.stdin.readline()
+                    running = 0
 
-                    response_header = b''
-                    response_data = b''
-                    
-                    request_fullname = request_dirname[1:] + "/" + request_basename
-                    print("request_fullname : " + request_fullname)
+        # close threads
+        self.server.close()
+        for client in self.client_threads:
+            client.join()
 
-                    if request_file == '/' \
-                        or request_basename == 'index.html' \
-                        or (check_folder(request_dirname[1:]) and not check_file(request_fullname)):
-                        try:
-                            if request_file == '/':
-                                f = open('index.html', 'r')
-                            else:
-                                f = open(request_dirname[1:] + "/" + 'index.html', 'r')
-                            response_data = f.read()
-                            f.close()
-                            
-                            content_length = len(response_data)
-                            response_header = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length:' \
-                                            + str(content_length) + '\r\n\r\n'
-                        except IOError:
-                            response_data = '''
-                            <html lang="en">
-                            <head>
-                                <meta charset="UTF-8">
-                                <meta http-equiv="X-UA-Compatible" content="IE=edge">
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                <title>Document</title>
-                            </head>
-                            <body>
-                                Index of directory
-                            '''
-                            for root, dirs, files in os.walk(".", topdown=False):
-                                for name in files:
-                                    response_data += '''
-                                    <div>
-                                    File: {}
-                                    </div>
-                                    '''.format(name)
-                                for name in dirs:
-                                    response_data += '''
-                                    <div>
-                                    Folder: {}
-                                    </div>
-                                    '''.format(name)
-                            response_data += '''
-                            </body>
-                            </html>
-                            '''
-                            content_length = len(response_data)
-                            response_header = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length:' \
-                                            + str(content_length) + '\r\n\r\n'
+class Client(threading.Thread):
+    def __init__(self, client, address):
+        self.client = client
+        self.address = address
+        self.size = 1024
 
-                        sock.sendall(response_header.encode('utf-8') + response_data.encode('utf-8'))
+    def get_index(self, request_file, request_dir):
+        response_header = b''
+        response_data = b''
 
-                    elif check_file(request_fullname):
-                        with open(request_fullname, "rb") as file:
-                            data_send = file.read()
-                        send(sock, data_send)
+        if request_file == '/' or request_file == '/index.html':
+            f = open('index.html', 'r')
+        else:
+            f = open(request_dir + '/' + 'index.html', 'r')
+        response_data = f.read()
+        f.close()
+        
+        content_length = len(response_data)
+        response_header = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length:' \
+                        + str(content_length) + '\r\n\r\n'
+        self.client.sendall(response_header.encode('utf-8') + response_data.encode('utf-8'))
 
-                    else:
-                        try:
-                            print(request_file)
-                            f = open('404.html', 'r')
-                            response_data = f.read()
-                            f.close()
-                            
-                            response_header = 'HTTP/1.1 404 Not Found\r\n\r\n'
+    def get_listdir(self, request_dirname):
+        response_header = b''
+        response_data = b''
 
-                            sock.sendall(response_header.encode('utf-8') + response_data.encode('utf-8'))
-                        except IOError:
-                            sock.sendall(b'HTTP/1.1 404 Not found\r\n\r\n')
+        response_data = '''
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Document</title>
+            </head>
+            <body>
+                Index of directory
+            '''
+        for root, dirs, files in os.walk(path.join(request_dirname), topdown=False):
+            for name in files:
+                response_data += '''
+                <div>
+                File: {}
+                </div>
+                '''.format(name)
+            for name in dirs:
+                response_data += '''
+                <div>
+                Folder: {}
+                </div>
+                '''.format(name)
+        response_data += '''
+        </body>
+        </html>
+        '''
+        content_length = len(response_data)
+        response_header = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length:' \
+                        + str(content_length) + '\r\n\r\n'
+
+        self.client.sendall(response_header.encode('utf-8') + response_data.encode('utf-8'))
+
+    def get_file(self, file_path):
+        response_header = b''
+        data_send = b''
+
+        file = open(file_path, 'rb')
+        data_send = file.read()
+        file.close()
+
+        length = len(data_send)
+        byte = 0
+
+        if length < self.size:
+            print("Y")
+            self.client.sendall(data_send)
+        else:
+            while byte < length:
+                self.client.send(data_send[byte:byte+self.size])
+                byte += self.size
+        
+    def get_404(self):
+        response_header = b''
+        response_data = b''
+
+        f = open('404.html', 'r')
+        response_data = f.read()
+        f.close()
+        
+        response_header = 'HTTP/1.1 404 Not Found\r\n\r\n'
+
+        self.client.sendall(response_header.encode('utf-8') + response_data.encode('utf-8'))
+
+    def run(self):
+        running = 1
+        while running:
+            data = self.client.recv(self.size)
+            if data:
+                data = data.decode('utf-8')
+                request_header = data.split('\r\n')
+                print(request_header[0])
+
+                request_file = request_header[0].split(" ")[1]
+                request_dirname = path.dirname(request_file)
+                request_basename = path.basename(request_file)
+                request_fullname = request_dirname[1:] + "/" + request_basename
+                print("request_fullname : " + request_fullname)
+
+                
+                if request_file == '/' \
+                    or request_basename == 'index.html' \
+                    or (check_folder(request_dirname[1:]) and not check_file(request_fullname)):
+                    try:
+                        self.get_index(request_file, request_dirname[1:])
+                        
+                    except IOError:
+                        self.get_listdir(request_dirname[1:])
+
+                elif check_file(request_fullname):
+                    self.get_file(request_fullname)
+
                 else:
-                    sock.close()
-                    input_socket.remove(sock)
+                    try:
+                        print(request_file)
+                        self.get_404()
+                    except IOError:
+                        self.client.sendall(b'HTTP/1.1 404 Not found\r\n\r\n')
+            else:
+                self.client.close()
+                running = 0
 
-except KeyboardInterrupt:        
-    server_socket.close()
-    sys.exit(0)
+if __name__ == "__main__":
+    config = configparser.ConfigParser()
+    config.read('httpserver.conf')
+
+    configserver = config['SERVER']
+    HOST = configserver['host']
+    PORT = int(configserver['port'])
+
+    server = Server(HOST, PORT)
+    server.run()
