@@ -69,6 +69,7 @@ class Server:
 
 class Client(threading.Thread):
     def __init__(self, client, address):
+        threading.Thread.__init__(self)
         self.client = client
         self.address = address
         self.size = 1024
@@ -128,22 +129,24 @@ class Client(threading.Thread):
         self.client.sendall(response_header.encode('utf-8') + response_data.encode('utf-8'))
 
     def get_file(self, file_path):
-        response_header = b''
-        data_send = b''
+        # response_header = b''
+        # response_data = b''
 
         file = open(file_path, 'rb')
-        data_send = file.read()
+        response_data = file.read()
         file.close()
-
-        length = len(data_send)
+        length = len(response_data)
         byte = 0
 
         if length < self.size:
-            print("Y")
-            self.client.sendall(data_send)
+            # content_length = len(response_data)
+            # response_header = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length:' \
+            #             + str(content_length) + '\r\n\r\n'
+            # self.client.sendall(response_header.encode('utf-8') + response_data.encode('utf-8'))
+            self.client.sendall(response_data)
         else:
             while byte < length:
-                self.client.send(data_send[byte:byte+self.size])
+                self.client.send(response_data[byte:byte+self.size])
                 byte += self.size
         
     def get_404(self):
@@ -172,6 +175,7 @@ class Client(threading.Thread):
                 request_basename = path.basename(request_file)
                 request_fullname = request_dirname[1:] + "/" + request_basename
                 print("request_fullname : " + request_fullname)
+                print("request_dirname : " + request_dirname)
 
                 
                 if request_file == '/' \
@@ -188,7 +192,7 @@ class Client(threading.Thread):
 
                 else:
                     try:
-                        print(request_file)
+                        print('get_404')
                         self.get_404()
                     except IOError:
                         self.client.sendall(b'HTTP/1.1 404 Not found\r\n\r\n')
