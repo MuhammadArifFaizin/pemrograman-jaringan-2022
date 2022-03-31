@@ -6,8 +6,6 @@ import threading
 from os import path
 import configparser
 
-from numpy import size
-
 def convert_to_bytes(no):
     result = bytearray()
     result.append(no & 255)
@@ -49,14 +47,14 @@ class Server:
 
         while running:
             read_ready, write_ready, exception = select.select(input_socket, [], [])
-            
+
             for sock in read_ready:
                 if sock == self.server:
                     client_socket, client_address = self.server.accept()
                     client = Client(client_socket, client_address)
-                    client.run()
-                    self.client_threads.append(client_socket)                       
-                
+                    client.start()
+                    self.client_threads.append(client)
+
                 elif sock == sys.stdin:
                     # handle standard input
                     _ = sys.stdin.readline()
@@ -69,6 +67,7 @@ class Server:
 
 class Client(threading.Thread):
     def __init__(self, client, address):
+        threading.Thread.__init__(self)
         self.client = client
         self.address = address
         self.size = 1024
@@ -83,7 +82,7 @@ class Client(threading.Thread):
             f = open(request_dir + '/' + 'index.html', 'r')
         response_data = f.read()
         f.close()
-        
+
         content_length = len(response_data)
         response_header = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length:' \
                         + str(content_length) + '\r\n\r\n'
@@ -145,7 +144,7 @@ class Client(threading.Thread):
             while byte < length:
                 self.client.send(data_send[byte:byte+self.size])
                 byte += self.size
-        
+
     def get_404(self):
         response_header = b''
         response_data = b''
@@ -153,7 +152,7 @@ class Client(threading.Thread):
         f = open('404.html', 'r')
         response_data = f.read()
         f.close()
-        
+
         response_header = 'HTTP/1.1 404 Not Found\r\n\r\n'
 
         self.client.sendall(response_header.encode('utf-8') + response_data.encode('utf-8'))
@@ -173,13 +172,12 @@ class Client(threading.Thread):
                 request_fullname = request_dirname[1:] + "/" + request_basename
                 print("request_fullname : " + request_fullname)
 
-                
                 if request_file == '/' \
                     or request_basename == 'index.html' \
                     or (check_folder(request_dirname[1:]) and not check_file(request_fullname)):
                     try:
                         self.get_index(request_file, request_dirname[1:])
-                        
+
                     except IOError:
                         self.get_listdir(request_dirname[1:])
 
