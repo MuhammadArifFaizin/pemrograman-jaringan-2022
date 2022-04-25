@@ -3,7 +3,7 @@ import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(('localhost', 21))
 
-commands = ['USER user1\r\n', 'PASS users\r\n', 'HELP\r\n', 'AUTH\r\n', 'OPTS\r\n','QUIT\r\n']
+commands = ['USER user1\r\n', 'PASS users\r\n', 'SYST\r\n','QUIT\r\n']
 i = 1
 while True:
     try:
