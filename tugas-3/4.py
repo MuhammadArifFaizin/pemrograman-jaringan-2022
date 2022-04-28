@@ -20,6 +20,9 @@ def execute(commands):
             msg = str(s.recv(1024).decode())
             print(msg.strip())
             
+
+
+            
             if "Entering Passive Mode" in msg:
                 msg_ip = msg.split('\r\n')[0].strip().split('\r\n')[0]
                 p1, p2 = msg_ip.split()[-1].strip('()').split(',')[-2:]
@@ -32,7 +35,7 @@ def execute(commands):
 
                 file_name = ' '.join(commands[4].strip('\r\n').split()[1:])
                 file_path = os.path.join(os.getcwd(), file_name)
-                
+
             elif "start data transfe" in msg:
                 data = data_sock.recv(1024).decode()
 

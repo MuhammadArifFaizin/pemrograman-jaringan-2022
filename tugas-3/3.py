@@ -10,6 +10,7 @@ def execute(commands):
     i = 1
     list_response = ""
     while True:
+        
         try:
             if i > len(commands):            
                 msg = str(s.recv(1024).decode())        
