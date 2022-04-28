@@ -11,19 +11,16 @@ def execute(commands):
     s.connect((HOST, PORT))
 
     i = 1
-    response = ""
     while True:
         try:
             if i > len(commands):            
-                msg = str(s.recv(STREAM_SIZE).decode("utf-8")) 
-                response += msg.strip()
+                msg = str(s.recv(1024).decode("utf-8")) 
                 print(msg.strip())
                 break
 
-            msg = str(s.recv(STREAM_SIZE).decode("utf-8"))   
+            msg = str(s.recv(1024).decode("utf-8"))
             s.send(commands[i-1].encode("utf-8"))
-            response += msg.strip()
-            print(msg.strip())     
+            print(msg.strip())
             i += 1
                     
         except socket.error:
@@ -33,7 +30,7 @@ def execute(commands):
 commands = [
     "USER " + USERNAME + "\r\n", 
     "PASS " + PASSWORD + "\r\n", 
-    "SYST\r\n"
+    "PWD " + "\r\n", 
     "QUIT\r\n"
     ]
 

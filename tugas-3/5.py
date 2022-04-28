@@ -5,25 +5,23 @@ PORT = 21
 STREAM_SIZE = 1024
 USERNAME = "user1"
 PASSWORD = "users"
+FOLDER_NAME = "test"
 
 def execute(commands):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
 
     i = 1
-    response = ""
     while True:
         try:
             if i > len(commands):            
-                msg = str(s.recv(STREAM_SIZE).decode("utf-8")) 
-                response += msg.strip()
+                msg = str(s.recv(1024).decode("utf-8")) 
                 print(msg.strip())
                 break
 
-            msg = str(s.recv(STREAM_SIZE).decode("utf-8"))   
+            msg = str(s.recv(1024).decode("utf-8"))
             s.send(commands[i-1].encode("utf-8"))
-            response += msg.strip()
-            print(msg.strip())     
+            print(msg.strip())
             i += 1
                     
         except socket.error:
@@ -33,7 +31,7 @@ def execute(commands):
 commands = [
     "USER " + USERNAME + "\r\n", 
     "PASS " + PASSWORD + "\r\n", 
-    "SYST\r\n"
+    "MKD " + FOLDER_NAME + "\r\n", 
     "QUIT\r\n"
     ]
 
