@@ -59,11 +59,14 @@ class MoveBtn:
     def get_obj(self):
         return self.move[self.index]
 
+    def set_move(self, move):
+        self.index = move
+
     def click(self, pos):
         x1 = pos[0]
         y1 = pos[1]
         if self.x <= x1 <= self.x + self.width and self.y <= y1 <= self.y + self.height:
-            if self.index < 4:
+            if self.index < 3:
                 self.index = self.index + 1
             else:
                 self.index = 0
@@ -97,28 +100,37 @@ def redrawWindow(win, game, p):
         text = font.render("Pick Number", 1, (0, 74, 173))
         win.blit(text, (200, 500))
 
-        move1 = movebtns[game.get_player_move(0)]
-        move2 = movebtns[game.get_player_move(1)]
+        p1move = game.get_player_move(0)
+        p2move = game.get_player_move(1)
+
+        print(p1move, p2move)
+        
+        move1 = movebtns[0]
+        move2 = movebtns[1]
+
+        move1.set_move(p1move if p1move != None else 0)
+        move2.set_move(p2move if p2move != None else 0)
+        
         if game.bothWent():
-            text1 = font.render(move1, 1, (0,0,0))
-            text2 = font.render(move2, 1, (0, 0, 0))
+            text1 = move1.get_obj()
+            text2 = move2.get_obj()
         else:
             if game.p1Went and p == 0:
                 text1 = move1.get_obj()
             elif game.p1Went:
-                text1 = font.render("Locked In", 1, (0, 0, 0))
+                text1 = font.render("Locked In", 1, (0,0,0))
             else:
-                text1 = font.render("Waiting...", 1, (0, 0, 0))
+                text1 = font.render("Waiting...", 1, (0,0,0))
 
             if game.p2Went and p == 1:
                 text2 = move2.get_obj()
             elif game.p2Went:
-                text2 = font.render("Locked In", 1, (0, 0, 0))
+                text2 = font.render("Locked In", 1, (0,0,0))
             else:
-                text2 = font.render("Waiting...", 1, (0, 0, 0))
+                text2 = font.render("Waiting...", 1, (0,0,0))
 
         font = pygame.font.SysFont("opensans", 80)
-        turn = font.render("Your Turn!!", 1, (0, 0, 0))
+        turn = font.render("Your Turn!!", 1, (0,0,0))
         win.blit(turn, (200, 100))
 
         if p == 1:
@@ -136,9 +148,9 @@ def redrawWindow(win, game, p):
 
     pygame.display.update()
 
-movebtns =[
-    MoveBtn(100, 350, (320, 320)), 
-    MoveBtn(400, 350, (320, 320))
+movebtns = [
+    MoveBtn(100, 350, (160, 80)), 
+    MoveBtn(400, 350, (160, 80))
     ]
 
 btns = [
@@ -197,10 +209,20 @@ def main():
                     if btn.click(pos) and game.connected():
                         if player == 0:
                             if not game.p1Went:
-                                n.send(btn.text)
+                                n.send("choice," + btn.text)
                         else:
                             if not game.p2Went:
-                                n.send(btn.text)
+                                n.send("choice," + btn.text)
+
+                for movebtn in movebtns:
+                    if movebtn.click(pos) and game.connected():
+                        if player == 0:
+                            if not game.p1Went:
+                                n.send("move," + str(movebtn.index))
+                        else:
+                            if not game.p2Went:
+                                n.send("move," + str(movebtn.index))
+
 
         redrawWindow(win, game, player)
 

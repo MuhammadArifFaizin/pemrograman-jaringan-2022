@@ -7,6 +7,7 @@ class Game:
         self.moves = [None, None]
         self.wins = [0,0]
         self.ties = 0
+        self.choice = None
 
     def get_player_move(self, p):
         """
@@ -21,6 +22,9 @@ class Game:
             self.p1Went = True
         else:
             self.p2Went = True
+    
+    def select(self, choice):
+        self.choice = choice
 
     def connected(self):
         return self.ready
@@ -30,21 +34,13 @@ class Game:
 
     def winner(self):
 
-        p1 = self.moves[0].upper()[0]
-        p2 = self.moves[1].upper()[0]
+        p1 = self.moves[0]
+        p2 = self.moves[1]
 
         winner = -1
-        if p1 == "R" and p2 == "S":
+        if p1 + p2 == 1:
             winner = 0
-        elif p1 == "S" and p2 == "R":
-            winner = 1
-        elif p1 == "P" and p2 == "R":
-            winner = 0
-        elif p1 == "R" and p2 == "P":
-            winner = 1
-        elif p1 == "S" and p2 == "P":
-            winner = 0
-        elif p1 == "P" and p2 == "S":
+        elif p1 + p2 == 2:
             winner = 1
 
         return winner
