@@ -38,7 +38,8 @@ def threaded_client(conn, p, gameId):
                 else:
                     if data['action'] == "reset":
                         game.resetWent()
-                        game.toggle_turn()
+                        if p == 0:
+                            game.toggle_turn()
                         game.reset_game()
                     elif data['action'] != "get":
                         if data['action'] == "move":

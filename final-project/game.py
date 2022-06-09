@@ -28,6 +28,9 @@ class Game:
     def get_turn(self):
         return self.turn
 
+    def get_choice(self):
+        return self.choice
+
     def toggle_turn(self):
         if self.turn == 0:
             self.turn = 1
@@ -54,15 +57,15 @@ class Game:
     def bothWent(self):
         return self.p1Went and self.p2Went
 
-    def winner(self):
+    def winner(self):    
         p1 = (self.moves[0] + 1) / 2
         p2 = (self.moves[1] + 1) / 2
 
         winner = -1
-        if int(p1 + p2) == self.choice:
+        if int(p1) + int(p2) == self.choice:
             winner = self.turn
 
-        print(int(p1+p2), self.choice)
+        print(p1, p2, int(p1) + int(p2), self.choice)
         print("winner : ", winner)
         return winner
 

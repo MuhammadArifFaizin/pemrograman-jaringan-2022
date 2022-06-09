@@ -168,6 +168,7 @@ def redrawWindow(win, game, p):
 
         font = pygame.font.SysFont("opensans", 80)
         turn = game.get_turn()
+        # print('p, turn:', p, turn)
         if p == turn:
             turn = font.render("Your Turn!!", 1, (0,0,0))
             win.blit(turn, (200, 100))
@@ -204,10 +205,13 @@ def main():
             redrawWindow(win, game, player)
             pygame.time.delay(500)
             winner = game.winner()
+            choice = game.get_choice()
             try:
                 for movebtn in movebtns:
                     movebtn.set_move(0)
+                print('game.get_turn before:', game.get_turn())
                 game = n.send({"action": "reset", "message": "data"})
+                print('game.get_turn after:', game.get_turn())
             except:
                 run = False
                 print("Couldn't get game")
@@ -223,8 +227,12 @@ def main():
 
             win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
 
+            font = pygame.font.SysFont("opensans", 60)
+            text_number = font.render("Number: " + str(choice), 1, (255, 0, 0))
+            win.blit(text_number, (width/2 - text_number.get_width()/2, height/3 - text_number.get_height()/2))
+
             pygame.display.update()
-            pygame.time.delay(2000)
+            pygame.time.delay(5000)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
