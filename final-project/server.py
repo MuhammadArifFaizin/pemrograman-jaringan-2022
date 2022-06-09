@@ -38,6 +38,8 @@ def threaded_client(conn, p, gameId):
                 else:
                     if data['action'] == "reset":
                         game.resetWent()
+                        game.toggle_turn()
+                        game.reset_game()
                     elif data['action'] != "get":
                         if data['action'] == "move":
                             game.play(p, int(data['message']))
@@ -72,7 +74,7 @@ while True:
         games[gameId] = Game(gameId)
         print("Creating a new game...")
     else:
-        games[gameId].ready = True
+        games[gameId].connect = True
         p = 1
 
     start_new_thread(threaded_client, (conn, p, gameId))

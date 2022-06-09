@@ -37,6 +37,9 @@ class Button:
         text = font.render(self.text, 1, (255,255,255))
         win.blit(text, (self.x + round(self.width/2) - round(text.get_width()/2), self.y + round(self.height/2) - round(text.get_height()/2)))
 
+    def set_color(self, color):
+        self.color = color
+
     def click(self, pos):
         x1 = pos[0]
         y1 = pos[1]
@@ -83,8 +86,7 @@ class ConfirmBtn(Button):
     def __init__(self, text, x, y, color, size, fontsize):
         super().__init__(text, x, y, color, size, fontsize)
 
-lock = Button("Lock", 280, 440, (0, 74, 173), (130, 40), 32)
-confirm = Button("Done", 280, 630, (0, 74, 173), (130, 40), 32)
+lock = Button("Lock", 280, 440, (150, 150, 150), (130, 40), 32)
 
 movebtns = [
     MoveBtn(100, 350, (160, 80)), 
@@ -92,18 +94,17 @@ movebtns = [
     ]
 
 btns = [
-    Button("0", 130, 555, (0, 74, 173), (50, 50), 40), 
-    Button("1", 230, 555, (0, 74, 173), (50, 50), 40), 
-    Button("2", 330, 555, (0, 74, 173), (50, 50), 40),
-    Button("3", 430, 555, (0, 74, 173), (50, 50), 40),
-    Button("4", 530, 555, (0, 74, 173), (50, 50), 40),
+    Button("0", 130, 565, (0, 74, 173), (50, 50), 40), 
+    Button("1", 230, 565, (0, 74, 173), (50, 50), 40), 
+    Button("2", 330, 565, (0, 74, 173), (50, 50), 40),
+    Button("3", 430, 565, (0, 74, 173), (50, 50), 40),
+    Button("4", 530, 565, (0, 74, 173), (50, 50), 40),
     ]
-
 
 def redrawWindow(win, game, p):
     win.fill((201,226,101))
 
-    if not(game.connected()):
+    if not(game.is_connected()):
         font = pygame.font.SysFont("opensans", 80)
         text = font.render("Waiting for Player...", 1, (255,0,0))
         win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
@@ -115,23 +116,22 @@ def redrawWindow(win, game, p):
         text = font.render("Opponents", 1, (0, 74, 173))
         win.blit(text, (380, 250))
 
-        text = font.render("Pick Number", 1, (0, 74, 173))
-        win.blit(text, (220, 500))
-
         p1move = game.get_player_move(0)
         p2move = game.get_player_move(1)
 
-        print(p1move, p2move)
+        # print(p1move, p2move)
         
         move1 = movebtns[0]
         move2 = movebtns[1]
         
         if game.bothWent():
+            move1.set_move(p1move)
+            move2.set_move(p2move)
             text1 = move1.get_obj()
             text2 = move2.get_obj()
         else:
             if p == 0:
-                if p1move == None:
+                if p1move == 0:
                     move1.set_move(0)
                 else:
                     move1.set_move(p1move)
@@ -142,7 +142,7 @@ def redrawWindow(win, game, p):
                 text1 = font.render("Waiting...", 1, (0,0,0))
 
             if p == 1:
-                if p2move == None:
+                if p2move == 0:
                     move2.set_move(0)
                 else:
                     move2.set_move(p2move)
@@ -151,23 +151,36 @@ def redrawWindow(win, game, p):
                 text2 = font.render("Locked In", 1, (0,0,0))
             else:
                 text2 = font.render("Waiting...", 1, (0,0,0))
-
-        font = pygame.font.SysFont("opensans", 80)
-        turn = font.render("Your Turn!!", 1, (0,0,0))
-        win.blit(turn, (200, 100))
-
-        if p == 1:
-            win.blit(text2, (100, 350))
-            win.blit(text1, (400, 350))
+        
+        if game.is_ready():
+            lock.set_color((0, 74, 173))
         else:
-            win.blit(text1, (100, 350))
-            win.blit(text2, (400, 350))
+            lock.set_color((150, 150, 150))
 
         lock.draw(win)
-        confirm.draw(win)
 
-        for btn in btns:
-            btn.draw(win)
+        if p == 0:
+            win.blit(text1, (100, 350))
+            win.blit(text2, (400, 350))
+        else:
+            win.blit(text2, (100, 350))
+            win.blit(text1, (400, 350))
+
+        font = pygame.font.SysFont("opensans", 80)
+        turn = game.get_turn()
+        if p == turn:
+            turn = font.render("Your Turn!!", 1, (0,0,0))
+            win.blit(turn, (200, 100))
+
+            font = pygame.font.SysFont("opensans", 60)
+            text = font.render("Pick Number", 1, (0, 74, 173))
+            win.blit(text, (220, 500))            
+
+            for btn in btns:
+                btn.draw(win)
+        else:
+            turn = font.render("Opponent Turn!!", 1, (0,0,0))
+            win.blit(turn, (120, 100))
 
     pygame.display.update()
 
@@ -190,6 +203,7 @@ def main():
         if game.bothWent():
             redrawWindow(win, game, player)
             pygame.time.delay(500)
+            winner = game.winner()
             try:
                 for movebtn in movebtns:
                     movebtn.set_move(0)
@@ -200,14 +214,15 @@ def main():
                 break
 
             font = pygame.font.SysFont("opensans", 90)
-            if (game.winner() == 1 and player == 1) or (game.winner() == 0 and player == 0):
+            if (winner == 1 and player == 1) or (winner == 0 and player == 0):
                 text = font.render("You Won!", 1, (255,0,0))
-            elif game.winner() == -1:
+            elif winner == -1:
                 text = font.render("Tie Game!", 1, (255,0,0))
             else:
                 text = font.render("You Lost...", 1, (255, 0, 0))
 
             win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
+
             pygame.display.update()
             pygame.time.delay(2000)
 
@@ -219,21 +234,19 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
 
-                if lock.click(pos) and game.connected():
+                if lock.click(pos) and game.is_connected():
                     n.send({"action": "lock", "player": player})
 
                 for btn in btns:
-                    if btn.click(pos) and game.connected():
+                    if btn.click(pos) and game.is_connected():
                         n.send({"action": "choice", "player": player, "message": str(btn.text)})
 
                 for movebtn in movebtns:
-                    if movebtn.click(pos) and game.connected():
+                    if movebtn.click(pos) and game.is_connected():
                         print("You are player", player)
                         print("movebtn.index", movebtn.index)
                         n.send({"action": "move", "message": str(movebtn.index)})
                         
-
-
         redrawWindow(win, game, player)
 
 def menu_screen():

@@ -2,9 +2,11 @@ class Game:
     def __init__(self, id):
         self.p1Went = False
         self.p2Went = False
+        self.connect = False
         self.ready = False
+        self.turn = 0
         self.id = id
-        self.moves = [None, None]
+        self.moves = [0, 0]
         self.wins = [0,0]
         self.ties = 0
         self.choice = None
@@ -16,36 +18,52 @@ class Game:
         """
         return self.moves[p]
 
+    def reset_game(self):
+        self.ready = False
+        self.choice = None
+
+    def is_ready(self):
+        return self.ready
+
+    def get_turn(self):
+        return self.turn
+
+    def toggle_turn(self):
+        if self.turn == 0:
+            self.turn = 1
+        elif self.turn == 1:
+            self.turn = 0
+
     def play(self, player, move):
         self.moves[player] = move
     
     def select(self, choice):
         self.choice = choice
+        self.ready = True
 
     def lock(self, player):
-        if player == 0:
-            self.p1Went = True
-        else:
-            self.p2Went = True
+        if self.ready:
+            if player == 0:
+                self.p1Went = True
+            else:
+                self.p2Went = True
 
-    def connected(self):
-        return self.ready
+    def is_connected(self):
+        return self.connect
 
     def bothWent(self):
         return self.p1Went and self.p2Went
 
     def winner(self):
-
         p1 = (self.moves[0] + 1) / 2
         p2 = (self.moves[1] + 1) / 2
 
         winner = -1
-        if p1 + p2 == 1:
-            winner = 0
-        elif p1 + p2 == 2:
-            winner = 1
+        if int(p1 + p2) == self.choice:
+            winner = self.turn
 
-        print("p1 + p2, winner", p1 + p2, winner)
+        print(int(p1+p2), self.choice)
+        print("winner : ", winner)
         return winner
 
     def resetWent(self):
