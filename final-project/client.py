@@ -115,14 +115,14 @@ def redrawWindow(win, game, p):
             text1 = move1.get_obj()
             text2 = move2.get_obj()
         else:
-            if game.p1Went and p == 0:
+            if p == 0:
                 text1 = move1.get_obj()
             elif game.p1Went:
                 text1 = font.render("Locked In", 1, (0,0,0))
             else:
                 text1 = font.render("Waiting...", 1, (0,0,0))
 
-            if game.p2Went and p == 1:
+            if p == 1:
                 text2 = move2.get_obj()
             elif game.p2Went:
                 text2 = font.render("Locked In", 1, (0,0,0))
@@ -160,6 +160,7 @@ btns = [
     Button("3", 400, 550, (0, 74, 173), (50, 50)),
     Button("4", 500, 550, (0, 74, 173), (50, 50)),
     ]
+
 def main():
     run = True
     clock = pygame.time.Clock()
@@ -170,7 +171,7 @@ def main():
     while run:
         clock.tick(60)
         try:
-            game = n.send("get")
+            game = n.send({"action": "run", "message": "data"})
         except:
             run = False
             print("Couldn't get game")
@@ -180,7 +181,9 @@ def main():
             redrawWindow(win, game, player)
             pygame.time.delay(500)
             try:
-                game = n.send("reset")
+                for movebtn in movebtns:
+                    movebtn.set_move(0)
+                game = n.send({"action": "reset", "message": "data"})
             except:
                 run = False
                 print("Couldn't get game")
@@ -208,20 +211,18 @@ def main():
                 for btn in btns:
                     if btn.click(pos) and game.connected():
                         if player == 0:
-                            if not game.p1Went:
-                                n.send("choice," + btn.text)
+                            # if not game.p1Went:
+                            n.send({"action": "choice", "message": str(btn.text)})
                         else:
-                            if not game.p2Went:
-                                n.send("choice," + btn.text)
+                            # if not game.p2Went:
+                            n.send({"action": "choice", "message": str(btn.text)})
 
                 for movebtn in movebtns:
                     if movebtn.click(pos) and game.connected():
-                        if player == 0:
-                            if not game.p1Went:
-                                n.send("move," + str(movebtn.index))
-                        else:
-                            if not game.p2Went:
-                                n.send("move," + str(movebtn.index))
+                        print("You are player", player)
+                        print("movebtn.index", movebtn.index)
+                        n.send({"action": "move", "message": str(movebtn.text)})
+                        
 
 
         redrawWindow(win, game, player)

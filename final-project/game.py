@@ -18,10 +18,10 @@ class Game:
 
     def play(self, player, move):
         self.moves[player] = move
-        if player == 0:
-            self.p1Went = True
-        else:
-            self.p2Went = True
+        # if player == 0:
+        #     self.p1Went = True
+        # else:
+        #     self.p2Went = True
     
     def select(self, choice):
         self.choice = choice
@@ -34,8 +34,8 @@ class Game:
 
     def winner(self):
 
-        p1 = self.moves[0]
-        p2 = self.moves[1]
+        p1 = (self.moves[0] + 1) / 2
+        p2 = (self.moves[1] + 1) / 2
 
         winner = -1
         if p1 + p2 == 1:
@@ -43,6 +43,7 @@ class Game:
         elif p1 + p2 == 2:
             winner = 1
 
+        print("p1 + p2, winner", p1 + p2, winner)
         return winner
 
     def resetWent(self):
