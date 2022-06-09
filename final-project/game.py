@@ -18,13 +18,15 @@ class Game:
 
     def play(self, player, move):
         self.moves[player] = move
-        # if player == 0:
-        #     self.p1Went = True
-        # else:
-        #     self.p2Went = True
     
     def select(self, choice):
         self.choice = choice
+
+    def lock(self, player):
+        if player == 0:
+            self.p1Went = True
+        else:
+            self.p2Went = True
 
     def connected(self):
         return self.ready

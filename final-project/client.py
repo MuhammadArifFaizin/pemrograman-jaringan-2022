@@ -21,7 +21,7 @@ class State:
         self.bgcolor = bgcolor
 
 class Button:
-    def __init__(self, text, x, y, color, size):
+    def __init__(self, text, x, y, color, size, fontsize):
         self.text = text
         self.x = x
         self.y = y
@@ -29,10 +29,11 @@ class Button:
         self.tempcolor = color
         self.width = size[0]
         self.height = size[1]
+        self.fontsize = fontsize
 
     def draw(self, win):
         pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height))
-        font = pygame.font.SysFont("opensans", 40)
+        font = pygame.font.SysFont("opensans", self.fontsize)
         text = font.render(self.text, 1, (255,255,255))
         win.blit(text, (self.x + round(self.width/2) - round(text.get_width()/2), self.y + round(self.height/2) - round(text.get_height()/2)))
 
@@ -75,19 +76,36 @@ class MoveBtn:
             return False
 
 class NumberBtn(Button):
-    def __init__(self, text, x, y, color, size):
-        super().__init__(text, x, y, color, size)
+    def __init__(self, text, x, y, color, size, fontsize):
+        super().__init__(text, x, y, color, size, fontsize)
 
 class ConfirmBtn(Button):
-    def __init__(self, text, x, y, color, size):
-        super().__init__(text, x, y, color, size)
+    def __init__(self, text, x, y, color, size, fontsize):
+        super().__init__(text, x, y, color, size, fontsize)
+
+lock = Button("Lock", 280, 440, (0, 74, 173), (130, 40), 32)
+confirm = Button("Done", 280, 630, (0, 74, 173), (130, 40), 32)
+
+movebtns = [
+    MoveBtn(100, 350, (160, 80)), 
+    MoveBtn(400, 350, (160, 80))
+    ]
+
+btns = [
+    Button("0", 130, 555, (0, 74, 173), (50, 50), 40), 
+    Button("1", 230, 555, (0, 74, 173), (50, 50), 40), 
+    Button("2", 330, 555, (0, 74, 173), (50, 50), 40),
+    Button("3", 430, 555, (0, 74, 173), (50, 50), 40),
+    Button("4", 530, 555, (0, 74, 173), (50, 50), 40),
+    ]
+
 
 def redrawWindow(win, game, p):
     win.fill((201,226,101))
 
     if not(game.connected()):
         font = pygame.font.SysFont("opensans", 80)
-        text = font.render("Waiting for Player...", 1, (255,0,0), True)
+        text = font.render("Waiting for Player...", 1, (255,0,0))
         win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
     else:
         font = pygame.font.SysFont("opensans", 60)
@@ -98,7 +116,7 @@ def redrawWindow(win, game, p):
         win.blit(text, (380, 250))
 
         text = font.render("Pick Number", 1, (0, 74, 173))
-        win.blit(text, (200, 500))
+        win.blit(text, (220, 500))
 
         p1move = game.get_player_move(0)
         p2move = game.get_player_move(1)
@@ -107,15 +125,16 @@ def redrawWindow(win, game, p):
         
         move1 = movebtns[0]
         move2 = movebtns[1]
-
-        move1.set_move(p1move if p1move != None else 0)
-        move2.set_move(p2move if p2move != None else 0)
         
         if game.bothWent():
             text1 = move1.get_obj()
             text2 = move2.get_obj()
         else:
             if p == 0:
+                if p1move == None:
+                    move1.set_move(0)
+                else:
+                    move1.set_move(p1move)
                 text1 = move1.get_obj()
             elif game.p1Went:
                 text1 = font.render("Locked In", 1, (0,0,0))
@@ -123,6 +142,10 @@ def redrawWindow(win, game, p):
                 text1 = font.render("Waiting...", 1, (0,0,0))
 
             if p == 1:
+                if p2move == None:
+                    move2.set_move(0)
+                else:
+                    move2.set_move(p2move)
                 text2 = move2.get_obj()
             elif game.p2Went:
                 text2 = font.render("Locked In", 1, (0,0,0))
@@ -140,26 +163,13 @@ def redrawWindow(win, game, p):
             win.blit(text1, (100, 350))
             win.blit(text2, (400, 350))
 
-        confirm = Button("Done", 250, 630, (0, 74, 173), (150, 50))
+        lock.draw(win)
         confirm.draw(win)
 
         for btn in btns:
             btn.draw(win)
 
     pygame.display.update()
-
-movebtns = [
-    MoveBtn(100, 350, (160, 80)), 
-    MoveBtn(400, 350, (160, 80))
-    ]
-
-btns = [
-    Button("0", 100, 550, (0, 74, 173), (50, 50)), 
-    Button("1", 200, 550, (0, 74, 173), (50, 50)), 
-    Button("2", 300, 550, (0, 74, 173), (50, 50)),
-    Button("3", 400, 550, (0, 74, 173), (50, 50)),
-    Button("4", 500, 550, (0, 74, 173), (50, 50)),
-    ]
 
 def main():
     run = True
@@ -208,20 +218,19 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
+
+                if lock.click(pos) and game.connected():
+                    n.send({"action": "lock", "player": player})
+
                 for btn in btns:
                     if btn.click(pos) and game.connected():
-                        if player == 0:
-                            # if not game.p1Went:
-                            n.send({"action": "choice", "message": str(btn.text)})
-                        else:
-                            # if not game.p2Went:
-                            n.send({"action": "choice", "message": str(btn.text)})
+                        n.send({"action": "choice", "player": player, "message": str(btn.text)})
 
                 for movebtn in movebtns:
                     if movebtn.click(pos) and game.connected():
                         print("You are player", player)
                         print("movebtn.index", movebtn.index)
-                        n.send({"action": "move", "message": str(movebtn.text)})
+                        n.send({"action": "move", "message": str(movebtn.index)})
                         
 
 
@@ -236,7 +245,7 @@ def menu_screen():
         win.fill((128, 128, 128))
         font = pygame.font.SysFont("opensans", 60)
         text = font.render("Click to Play!", 1, (255,0,0))
-        win.blit(text, (100,200))
+        win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
         pygame.display.update()
 
         for event in pygame.event.get():

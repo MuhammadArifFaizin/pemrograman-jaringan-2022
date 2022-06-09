@@ -20,7 +20,6 @@ connected = set()
 games = {}
 idCount = 0
 
-
 def threaded_client(conn, p, gameId):
     global idCount
     conn.send(str.encode(str(p)))
@@ -28,7 +27,6 @@ def threaded_client(conn, p, gameId):
     reply = ""
     while True:
         try:
-            # data = conn.recv(4096).decode()
             msg = conn.recv(4096)
             data = pickle.loads(msg)
 
@@ -41,11 +39,12 @@ def threaded_client(conn, p, gameId):
                     if data['action'] == "reset":
                         game.resetWent()
                     elif data['action'] != "get":
-                        # cmd = data.split(",")
                         if data['action'] == "move":
                             game.play(p, int(data['message']))
                         elif data['action'] == "choice":
                             game.select(int(data['message']))
+                        elif data['action'] == "lock":
+                            game.lock(data['player'])
 
                     conn.sendall(pickle.dumps(game))
             else:
@@ -75,6 +74,5 @@ while True:
     else:
         games[gameId].ready = True
         p = 1
-
 
     start_new_thread(threaded_client, (conn, p, gameId))
