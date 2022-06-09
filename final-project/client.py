@@ -11,6 +11,7 @@ fistfist = pygame.image.load(r"./assets/fistfist.png")
 width = 700
 height = 700
 win = pygame.display.set_mode((width, height))
+default_font = "freesansbold"
 pygame.display.set_caption("Client")
 
 class State:
@@ -33,7 +34,7 @@ class Button:
 
     def draw(self, win):
         pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height))
-        font = pygame.font.SysFont("opensans", self.fontsize)
+        font = pygame.font.SysFont(default_font, self.fontsize)
         text = font.render(self.text, 1, (255,255,255))
         win.blit(text, (self.x + round(self.width/2) - round(text.get_width()/2), self.y + round(self.height/2) - round(text.get_height()/2)))
 
@@ -105,11 +106,11 @@ def redrawWindow(win, game, p):
     win.fill((201,226,101))
 
     if not(game.is_connected()):
-        font = pygame.font.SysFont("opensans", 80)
+        font = pygame.font.SysFont(default_font, 80)
         text = font.render("Waiting for Player...", 1, (255,0,0))
         win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
     else:
-        font = pygame.font.SysFont("opensans", 60)
+        font = pygame.font.SysFont(default_font, 60)
         text = font.render("Your Move", 1, (0, 74, 173))
         win.blit(text, (80, 250))
 
@@ -166,14 +167,14 @@ def redrawWindow(win, game, p):
             win.blit(text2, (100, 350))
             win.blit(text1, (400, 350))
 
-        font = pygame.font.SysFont("opensans", 80)
+        font = pygame.font.SysFont(default_font, 80)
         turn = game.get_turn()
         # print('p, turn:', p, turn)
         if p == turn:
             turn = font.render("Your Turn!!", 1, (0,0,0))
             win.blit(turn, (200, 100))
 
-            font = pygame.font.SysFont("opensans", 60)
+            font = pygame.font.SysFont(default_font, 60)
             text = font.render("Pick Number", 1, (0, 74, 173))
             win.blit(text, (220, 500))            
 
@@ -217,7 +218,7 @@ def main():
                 print("Couldn't get game")
                 break
 
-            font = pygame.font.SysFont("opensans", 90)
+            font = pygame.font.SysFont(default_font, 90)
             if (winner == 1 and player == 1) or (winner == 0 and player == 0):
                 text = font.render("You Won!", 1, (255,0,0))
             elif winner == -1:
@@ -227,7 +228,7 @@ def main():
 
             win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
 
-            font = pygame.font.SysFont("opensans", 60)
+            font = pygame.font.SysFont(default_font, 60)
             text_number = font.render("Number: " + str(choice), 1, (255, 0, 0))
             win.blit(text_number, (width/2 - text_number.get_width()/2, height/3 - text_number.get_height()/2))
 
@@ -264,7 +265,7 @@ def menu_screen():
     while run:
         clock.tick(60)
         win.fill((128, 128, 128))
-        font = pygame.font.SysFont("opensans", 60)
+        font = pygame.font.SysFont(default_font, 60)
         text = font.render("Click to Play!", 1, (255,0,0))
         win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
         pygame.display.update()
